@@ -2,6 +2,7 @@ import csv
 import tkinter as tk
 import tkinter.ttk as ttk
 from tkinter import *
+from tkinter import messagebox
 
 # access csv file
 
@@ -51,9 +52,7 @@ class Stdudent_Management_System(tk.Frame):
 
         self.frame_addstud = LabelFrame(self.root, text='Input Student Data', padx=10, pady=20)
         self.frame_addstud.pack(padx=5, pady=5)
-        self.frame_addstud.place(x=100, y=340)
-
-
+        self.frame_addstud.place(x=25, y=340)
 
         # add widget ID
         self.ID_label = tk.Label(self.frame_addstud, text="ID Number")
@@ -88,17 +87,19 @@ class Stdudent_Management_System(tk.Frame):
 
         # BUTTONS.....
         # Submit button
-        self.submit_btn = tk.Button(self.frame_addstud, text='insert', command=self.insert_data, width =20)
+        self.submit_btn = tk.Button(self.frame_addstud, text='insert', command=self.insert_data, width=20)
         self.submit_btn.grid(row=5, column=0)
-        self.del_button = tk.Button(self.frame_addstud, text='delete', command=self.del_row, width =20)
-        self.del_button.place(x= 300, y =110)
+        self.del_button = tk.Button(self.frame_addstud, text='delete', command=self.del_row, width=20)
+        self.del_button.grid(row=5, column=1)
+        self.edit_btn = tk.Button(self.frame_addstud, text='edit', command=self.edit_info, width=20)
+        self.edit_btn.grid(row=5, column=2)
+        self.chech_btn = tk.Button(self.frame_addstud, text='check', command=self.check_if_exists, width=20)
+        self.chech_btn.grid(row=6, column=0)
 
         self.modify = StringVar()
 
-
-
         self.search = tk.Label(self.root, text="Input ID number")
-        self.search.place (x=175, y=20 )
+        self.search.place(x=175, y=20)
         self.search_box = tk.Entry(self.root, textvariable=self.modify, width=50)
         self.search_box.place(x=270, y=20)
         self.modify.trace('w',
@@ -106,8 +107,37 @@ class Stdudent_Management_System(tk.Frame):
 
         # search
 
+    def edit_info(self):
+        dlt = self.tree.selection()[0]
+        print(dlt)
+        self.tree.delete(dlt)
+        self.infile()
+
+        self.tree.insert('', 'end', iid=self.iid, text="Item_" + str(self.id),
+                         values=(self.ID_entry.get(),
+                                 self.name_entry.get(),
+                                 self.year_entry.get(),
+                                 self.gender_entry.get(),
+                                 self.course_entry.get()))
+        self.iid = self.iid + 1
+        self.id = self.id + 1
+
+        with open(filepath, 'a', newline='') as file:
+            reader = csv.DictWriter(file,
+                                    fieldnames=('ID number', 'Name', 'year', 'Gender', 'course'),
+                                    lineterminator='\n'
+                                    )
+            reader.writerow({
+                'Name': self.name_entry.get(),
+                'ID number': self.ID_entry.get(),
+                'year': self.year_entry.get(),
+                'Gender': self.gender_entry.get(),
+                'course': self.course_entry.get()
+            })
+
     def search_stud(self, searching=''):
         self.tree.delete(*self.tree.get_children())
+
         with open(filepath, 'r') as file:
             read = csv.reader(file)
             self.iid = 1
@@ -122,17 +152,48 @@ class Stdudent_Management_System(tk.Frame):
 
                 self.iid += 1
 
+    def check_if_exists(self):
+        self.ID_num = self.sel['values'][0]
+        list = []
+        values = self.tree.item(self.var, 'values')
+        print(values[0])
+        print("hope this works")
+        with open(filepath, 'r') as file:
+            tups = tuple(file)
+            for row in tups:
+                print(row)
+
+
     def del_row(self):
         dlt = self.tree.selection()[0]
+        print(dlt)
         self.tree.delete(dlt)
         self.infile()
+
+        self.ID_entry.delete(0, END)
+        self.name_entry.delete(0, END)
+        self.year_entry.delete(0, END)
+        self.gender_entry.delete(0, END)
+        self.course_entry.delete(0, END)
 
     # def (del_csv):
 
     def select(self, a):
+        self.ID_entry.delete(0, END)
+        self.name_entry.delete(0, END)
+        self.year_entry.delete(0, END)
+        self.gender_entry.delete(0, END)
+        self.course_entry.delete(0, END)
         self.var = self.tree.focus()
         self.sel = self.tree.item(self.var)
         self.ID_num = self.sel['values'][0]
+        values = self.tree.item(self.var, 'values')
+
+        self.ID_entry.insert(0, values[0])
+        self.name_entry.insert(0, values[1])
+        self.year_entry.insert(0, values[2])
+        self.gender_entry.insert(0, values[3])
+        self.course_entry.insert(0, values[4])
 
     def infile(self):
         self.array = []
@@ -163,6 +224,7 @@ class Stdudent_Management_System(tk.Frame):
     # FUNCTIONS....
     # write function for the csv and tkinter
     def insert_data(self):
+        self.check_if_exists()
         self.tree.insert('', 'end', iid=self.iid, text="Item_" + str(self.id),
                          values=(self.ID_entry.get(),
                                  self.name_entry.get(),
